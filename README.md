@@ -45,6 +45,8 @@ An interactive, real‑time simulation of how data travels across the internet. 
 
 ## File Structure
 
-- `index.html` – The entire application (styles, markup, and JavaScript).
+- `index.html`
+- `style.css`
+- `script.js`
 - `README.md` – This file.
 
