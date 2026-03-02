@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+        <title>NetLab · responsive live internet simulation</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div id="app">
+        <!-- TOP BAR -->
+        <div id="topbar">
+            <div class="logo">⬡ NETLAB</div>
+            <div class="controls">
+            <button class="btn active" id="btn-view-normal" onclick="UI.setView('network')">🌐 Network</button>
+            <button class="btn" id="btn-view-encap" onclick="UI.setView('encap')">📦 Encap</button>
+            <button class="btn" id="btn-view-routing" onclick="UI.setView('routing')">🗺 Routing</button>
+            <span style="color:var(--text3);font-size:11px">|</span>
+            <button class="btn" onclick="Sim.replay()">↺ Replay</button>
+            <button class="btn" onclick="Sim.toggleSlowMo()" id="btn-slowmo">🐢 Slow Mo</button>
+            <span id="speed-display">1x</span>
+            </div>
+        </div>
+
+        <div id="main">
+            <!-- LEFT PANEL -->
+            <div id="left-panel">
+            <div class="panel-section">
+                <h3>▸ LOGIN</h3>
+                <div id="login-form">
+                <input type="text" id="inp-user" placeholder="username" value="alice@company.com">
+                <input type="password" id="inp-pass" placeholder="password" value="correct_password">
+                <button id="login-btn" onclick="Sim.triggerLogin()">▶ CONNECT</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>▸ SCENARIOS</h3>
+                <div class="scenario-list" id="scenario-list">
+                <div class="scenario-item selected" data-s="normal" onclick="Sim.setScenario('normal')">
+                    <div class="dot" style="background:#10b981"></div> Normal Login
+                </div>
+                <div class="scenario-item" data-s="wrong-pass" onclick="Sim.setScenario('wrong-pass')">
+                    <div class="dot" style="background:#f59e0b"></div> Wrong Password
+                </div>
+                <div class="scenario-item" data-s="dns-fail" onclick="Sim.setScenario('dns-fail')">
+                    <div class="dot" style="background:#ef4444"></div> DNS Failure
+                </div>
+                <div class="scenario-item" data-s="packet-loss" onclick="Sim.setScenario('packet-loss')">
+                    <div class="dot" style="background:#7c3aed"></div> Packet Loss
+                </div>
+                <div class="scenario-item" data-s="server-down" onclick="Sim.setScenario('server-down')">
+                    <div class="dot" style="background:#ef4444"></div> Server Down
+                </div>
+                <div class="scenario-item" data-s="no-internet" onclick="Sim.setScenario('no-internet')">
+                    <div class="dot" style="background:#ef4444"></div> No Internet
+                </div>
+                <div class="scenario-item" data-s="slow-network" onclick="Sim.setScenario('slow-network')">
+                    <div class="dot" style="background:#f59e0b"></div> Slow Network
+                </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>▸ OSI/TCP-IP</h3>
+                <div class="osi-stack">
+                <div class="osi-layer" id="layer-7"><span>7 APPLICATION</span><span class="layer-num">HTTP/TLS</span></div>
+                <div class="osi-layer" id="layer-6"><span>6 PRESENTATION</span><span class="layer-num">TLS Enc</span></div>
+                <div class="osi-layer" id="layer-5"><span>5 SESSION</span><span class="layer-num">TCP Sess</span></div>
+                <div class="osi-layer" id="layer-4"><span>4 TRANSPORT</span><span class="layer-num">TCP/UDP</span></div>
+                <div class="osi-layer" id="layer-3"><span>3 NETWORK</span><span class="layer-num">IP/Route</span></div>
+                <div class="osi-layer" id="layer-2"><span>2 DATA LINK</span><span class="layer-num">Ethernet</span></div>
+                <div class="osi-layer" id="layer-1"><span>1 PHYSICAL</span><span class="layer-num">Signals</span></div>
+                </div>
+            </div>
+            </div>
+
+            <!-- CANVAS AREA -->
+            <div id="canvas-area">
+                <div class="panel-section" style="padding-bottom:4px">
+                <h3>▸ EVENT LOG</h3>
+            </div>
+            <div id="event-log"></div>
+            <canvas id="sim-canvas"></canvas>
+
+            <div id="status-bar">Ready — Click ▶ CONNECT to begin simulation</div>
+
+            <div id="zoom-controls">
+                <button class="btn" onclick="Camera.zoom(1.2)">+</button>
+                <button class="btn" onclick="Camera.zoom(0.8)">−</button>
+                <button class="btn" onclick="Camera.reset()">⌂</button>
+            </div>
+
+            <div id="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#00d4ff"></div> Data</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div> ACK</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> DNS</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> SYN</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Error</div>
+            </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div id="right-panel">
+            <div id="packet-inspector">
+                <h3>▸ PACKET INSPECTOR</h3>
+                <div id="packet-fields">
+                <div class="packet-field"><span class="key">Status</span><span class="val" id="pi-status">—</span></div>
+                <div class="packet-field"><span class="key">Src IP</span><span class="val" id="pi-src">—</span></div>
+                <div class="packet-field"><span class="key">Dst IP</span><span class="val" id="pi-dst">—</span></div>
+                <div class="packet-field"><span class="key">Port</span><span class="val" id="pi-port">—</span></div>
+                <div class="packet-field"><span class="key">Protocol</span><span class="val" id="pi-proto">—</span></div>
+                <div class="packet-field"><span class="key">TTL</span><span class="val" id="pi-ttl">—</span></div>
+                <div class="packet-field"><span class="key">Seq#</span><span class="val" id="pi-seq">—</span></div>
+                <div class="packet-field"><span class="key">Payload</span><span class="val" id="pi-payload">—</span></div>
+                <div class="packet-field"><span class="key">Phase</span><span class="val" id="pi-phase">—</span></div>
+                </div>
+            </div>
+
+            <div id="encap-view">
+                <h3>▸ ENCAPSULATION</h3>
+                <div class="encap-stack" id="encap-stack">
+                <div class="encap-layer data hidden" id="enc-data">PAYLOAD (Login)</div>
+                <div class="encap-layer http hidden" id="enc-http">HTTP Header</div>
+                <div class="encap-layer tcp hidden" id="enc-tcp">TCP Header</div>
+                <div class="encap-layer ip hidden" id="enc-ip">IP Header</div>
+                <div class="encap-layer eth hidden" id="enc-eth">Ethernet Frame</div>
+                </div>
+                <div style="font-size:9px;color:var(--text3);margin-top:8px" id="encap-note">
+                Layers wrap from inside →
+                </div>
+            </div>
+
+            <div id="conn-table">
+                <h3>▸ ACTIVE CONNECTIONS</h3>
+                <div id="conn-rows"></div>
+            </div>
+            </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div id="timeline-bar">
+            <span style="font-size:9px;color:var(--text3);margin-right:8px;flex-shrink:0">TIMELINE</span>
+            <div id="timeline-events" style="display:flex;align-items:center;gap:4px"></div>
+        </div>
+        </div>
+
+        <div id="tooltip"></div>
+        
+        <script src="script.js"></script>
+
+    </body>
+</html>
